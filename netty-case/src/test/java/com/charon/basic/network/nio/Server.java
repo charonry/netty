@@ -67,7 +67,9 @@ public class Server {
                     ServerSocketChannel channel = (ServerSocketChannel)key.channel();
                     SocketChannel socketChannel = channel.accept();
                     socketChannel.configureBlocking(false);
-                    SelectionKey scKey = socketChannel.register(selector, 0, null);
+                    ByteBuffer buffer = ByteBuffer.allocate(4);
+                    // 将bytebuffer作为附件关联到SelectionKey上
+                    SelectionKey scKey = socketChannel.register(selector, 0, buffer);
                     scKey.interestOps(SelectionKey.OP_READ);
                     log.debug("socketChannel: {}", socketChannel);
                     log.debug("scKey: {}", scKey);
@@ -75,15 +77,19 @@ public class Server {
                 }else if(key.isReadable()){
                     try {
                         SocketChannel channel = (SocketChannel)key.channel();
-                        ByteBuffer buffer = ByteBuffer.allocate(4);
+                        // 获取SelectionKey上附件
+                        ByteBuffer buffer = (ByteBuffer)key.attachment();
                         int read = channel.read(buffer);
                         if(read == -1){
                             key.cancel();
                         }else {
-                            /*buffer.flip();
-                            //ByteBufferUtil.debugAll(buffer);
-                            System.out.println(Charset.defaultCharset().decode(buffer));*/
                             split(buffer);
+                            if(buffer.limit() == buffer.capacity()){
+                                ByteBuffer newBuffer = ByteBuffer.allocate(buffer.capacity() << 1);
+                                buffer.flip();
+                                newBuffer.put(buffer);
+                                key.attach(newBuffer);
+                            }
                         }
                     }catch (Exception e){
                         e.printStackTrace();
