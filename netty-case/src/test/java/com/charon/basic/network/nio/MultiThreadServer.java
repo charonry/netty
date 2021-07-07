@@ -11,6 +11,7 @@ import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @program: netty
@@ -28,7 +29,11 @@ public class MultiThreadServer {
         ssc.register(selector, SelectionKey.OP_ACCEPT);
         ssc.bind(new InetSocketAddress(8080));
         // 1. 创建固定数量的 worker 并初始化
-        Worker worker = new Worker("worker-0");
+        Worker[] workers = new Worker[Runtime.getRuntime().availableProcessors()];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new Worker("worker-" + i);
+        }
+        AtomicInteger index = new AtomicInteger();
         while (true){
             selector.select();
             Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
@@ -41,7 +46,7 @@ public class MultiThreadServer {
                     log.debug("contect......{}",socketChannel.getRemoteAddress());
                     // 2. 关联 selector
                     log.debug(" before contect......{}",socketChannel.getRemoteAddress());
-                    worker.register(socketChannel);
+                    workers[index.getAndIncrement()%workers.length].register(socketChannel);
                     log.debug(" after contect......{}",socketChannel.getRemoteAddress());
                 }
             }
@@ -71,16 +76,17 @@ public class MultiThreadServer {
                 thread.start();
                 start.set(true);
             }
-            // 向队列添加了任务，但是这个任务并没有执行
+            /*// 向队列添加了任务，但是这个任务并没有执行
             queue.add(()->{
                 try {
                     socketChannel.register(selector,SelectionKey.OP_READ,null);
                 } catch (ClosedChannelException e) {
                     e.printStackTrace();
                 }
-            });
+            });*/
             // 唤醒select方法
             selector.wakeup();
+            socketChannel.register(selector,SelectionKey.OP_READ,null);
         }
 
         @SneakyThrows
@@ -88,11 +94,11 @@ public class MultiThreadServer {
         public void run() {
             while (true){
                     selector.select();
-                    Runnable task = queue.poll();
+                   /* Runnable task = queue.poll();
                     if(task != null){
                         // 执行了上面queue里面的任务
                         task.run();
-                    }
+                    }*/
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                     while (iterator.hasNext()){
                         SelectionKey scKey = iterator.next();
