@@ -39,12 +39,21 @@ public class Pipeline {
                                 super.channelRead(ctx, msg);
                             }
                         });
+                        pipeline.addLast("insertOutboundHandler",new ChannelOutboundHandlerAdapter(){
+                            @Override
+                            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                                log.debug("4.....插入");
+                                super.write(ctx, msg, promise);
+                            }
+                        });
                         pipeline.addLast("lastInboundHandler",new ChannelInboundHandlerAdapter(){
                             @Override
                             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                 log.debug("3");
-                                super.channelRead(ctx, msg);
-                                nioSocketChannel.writeAndFlush(ctx.alloc().buffer().writeBytes("charon".getBytes()));
+                                //super.channelRead(ctx, msg); // 是向下寻找入站处理器
+                                // 并不会执行出站处理器（原因：ctx.writeAndFlush是向前查找而非整个链路）
+                                ctx.writeAndFlush(ctx.alloc().buffer().writeBytes("charon".getBytes()));
+                                //nioSocketChannel.writeAndFlush(ctx.alloc().buffer().writeBytes("charon".getBytes()));
                             }
                         });
                         pipeline.addLast("firstOutboundHandler",new ChannelOutboundHandlerAdapter(){
