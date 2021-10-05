@@ -42,6 +42,10 @@ public class EventLoopServer {
                             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                 ByteBuf byteBuf = (ByteBuf) msg;
                                 log.debug(byteBuf.toString(Charset.defaultCharset()));
+                                // 建议使用 ctx.alloc() 创建 ByteBuf
+                                ByteBuf response = ctx.alloc().buffer();
+                                response.writeBytes(byteBuf);
+                                ctx.writeAndFlush(response);
                             }
                         });
                     }
