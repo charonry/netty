@@ -1,4 +1,4 @@
-package com.charon.basic.bytebuffer.depth;
+package com.charon.basic.bytebuf;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -12,10 +12,10 @@ import static io.netty.util.internal.StringUtil.NEWLINE;
  * @author: charon
  * @create: 2021-10-05 13:31
  **/
-public class DepthByteBuffer {
+public class DepthByteBuf {
     public static void main(String[] args) {
         // 默认容量是256，可扩展；区别于NIO自定义容量不可扩展
-        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(10);
+        ByteBuf byteBuf = ByteBufAllocator.DEFAULT.buffer(10);
         /*// 堆内存
         ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer(10);
         // 直接内存
@@ -31,23 +31,23 @@ public class DepthByteBuffer {
 
         /*写入后数据大小未超过512，则选择下一个16的整数倍,例如写入后大小为12,则扩容后capacity是16;
         写入后数据大小超过512,则选择下一个2^n，例如写入后大小为 513，则扩容后capacity是2^10=1024（2^9=512 已经不够了）*/
-        buffer.writeBytes(new byte[]{1,2,3,4});
-        log(buffer);
-        buffer.writeInt(5);
-        log(buffer);
-        buffer.writeInt(6);
-        log(buffer);
+        byteBuf.writeBytes(new byte[]{1,2,3,4});
+        log(byteBuf);
+        byteBuf.writeInt(5);
+        log(byteBuf);
+        byteBuf.writeInt(6);
+        log(byteBuf);
         System.out.println("-----------------------开始读取------------------");
         for(int i = 0 ; i < 4 ; i++){
-            System.out.println(buffer.readByte());
+            System.out.println(byteBuf.readByte());
         }
-        log(buffer);
-        buffer.markReaderIndex();
-        System.out.println(buffer.readInt());
-        log(buffer);
+        log(byteBuf);
+        byteBuf.markReaderIndex();
+        System.out.println(byteBuf.readInt());
+        log(byteBuf);
         // 重复读取:重置到标记位置 reset
-        buffer.resetReaderIndex();
-        log(buffer);
+        byteBuf.resetReaderIndex();
+        log(byteBuf);
     }
 
     public static void log(ByteBuf buffer) {
