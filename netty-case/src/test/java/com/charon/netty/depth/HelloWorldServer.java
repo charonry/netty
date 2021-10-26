@@ -28,7 +28,9 @@ public class HelloWorldServer {
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             // 半包设置
-            serverBootstrap.option(ChannelOption.SO_RCVBUF,10);
+            //serverBootstrap.option(ChannelOption.SO_RCVBUF,10);
+            // 调整netty的接收缓存区（bytebuf）
+            serverBootstrap.childOption(ChannelOption.RCVBUF_ALLOCATOR,new AdaptiveRecvByteBufAllocator(16,16,16));
             serverBootstrap.channel(NioServerSocketChannel.class)
                     .group(boss, worker)
                     .childHandler(new ChannelInitializer<SocketChannel>() {

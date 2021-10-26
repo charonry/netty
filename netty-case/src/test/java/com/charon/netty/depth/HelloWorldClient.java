@@ -21,6 +21,14 @@ import java.net.InetSocketAddress;
 @Slf4j
 public class HelloWorldClient {
     public static void main(String[] args) {
+        // 初始发送数据
+        for(int i = 0 ; i < 10 ; i++){
+            send();
+        }
+        System.out.println("finish");
+    }
+
+    public static void send() {
         NioEventLoopGroup worker = new NioEventLoopGroup();
         try {
             Bootstrap bootstrap = new Bootstrap()
@@ -35,8 +43,10 @@ public class HelloWorldClient {
                                 public void channelActive(ChannelHandlerContext ctx) throws Exception {
                                     for (int i = 0; i < 10; i++) {
                                         ByteBuf buffer = ctx.alloc().buffer();
-                                        buffer.writeBytes(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
+                                        buffer.writeBytes(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,16,17});
                                         ctx.writeAndFlush(buffer);
+                                        // 发完即关
+                                        ctx.channel().close();
                                     }
                                 }
                             });
@@ -49,7 +59,5 @@ public class HelloWorldClient {
         }finally {
             worker.shutdownGracefully();
         }
-
-
     }
 }
