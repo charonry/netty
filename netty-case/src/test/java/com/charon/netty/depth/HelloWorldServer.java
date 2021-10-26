@@ -1,11 +1,15 @@
 package com.charon.netty.depth;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.FixedLengthFrameDecoder;
+import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +42,11 @@ public class HelloWorldServer {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             // 固定长度在打印之前
-                            socketChannel.pipeline().addLast(new FixedLengthFrameDecoder(10));
+                            //socketChannel.pipeline().addLast(new FixedLengthFrameDecoder(10));
+                            //socketChannel.pipeline().addLast(new LineBasedFrameDecoder(1024));
+                            ByteBuf byteBuf = ByteBufAllocator.DEFAULT.buffer(1);
+                            byteBuf.writeBytes(new byte[]{','});
+                            socketChannel.pipeline().addLast(new DelimiterBasedFrameDecoder(1024,byteBuf));
                             socketChannel.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
                             /*socketChannel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
                                 @Override

@@ -40,6 +40,15 @@ public class HelloWorldClient {
         return bytes;
     }
 
+    public static StringBuilder makeString(char c, int len) {
+        StringBuilder sb = new StringBuilder(len + 1);
+        for (int i = 0; i < len; i++) {
+            sb.append(c);
+        }
+        sb.append(",");
+        return sb;
+    }
+
     public static void send() {
         NioEventLoopGroup worker = new NioEventLoopGroup();
         try {
@@ -54,13 +63,14 @@ public class HelloWorldClient {
                                 // 会在连接建立成功之后出发activities事件
                                 @Override
                                 public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                                    char c = 'a';
-                                    Random r = new Random();
                                     ByteBuf buf = ctx.alloc().buffer();
+                                    char c = '0';
+                                    Random r = new Random();
                                     for (int i = 0; i < 10; i++) {
-                                        byte[] bytes = fill10Bytes(c, r.nextInt(10) + 1);
+                                        //byte[] bytes = fill10Bytes(c, r.nextInt(10) + 1);
+                                        StringBuilder sb = makeString(c, r.nextInt(256)+1);
                                         c++;
-                                        buf.writeBytes(bytes);
+                                        buf.writeBytes(sb.toString().getBytes());
                                        /* ByteBuf buffer = ctx.alloc().buffer();
                                         buffer.writeBytes(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,16,17});
                                         ctx.writeAndFlush(buffer);
