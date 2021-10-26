@@ -8,9 +8,13 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Random;
 
 /**
  * @program: netty
@@ -22,10 +26,18 @@ import java.net.InetSocketAddress;
 public class HelloWorldClient {
     public static void main(String[] args) {
         // 初始发送数据
-        for(int i = 0 ; i < 10 ; i++){
-            send();
-        }
+        send();
         System.out.println("finish");
+    }
+
+    public static byte[] fill10Bytes(char c, int len){
+        byte[] bytes = new byte[10];
+        Arrays.fill(bytes, (byte) '_');
+        for (int i = 0; i < len; i++) {
+            bytes[i] = (byte) c;
+        }
+        System.out.println(new String(bytes));
+        return bytes;
     }
 
     public static void send() {
@@ -37,17 +49,25 @@ public class HelloWorldClient {
                     .handler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                            nioSocketChannel.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
                             nioSocketChannel.pipeline().addLast(new ChannelInboundHandlerAdapter(){
                                 // 会在连接建立成功之后出发activities事件
                                 @Override
                                 public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                                    char c = 'a';
+                                    Random r = new Random();
+                                    ByteBuf buf = ctx.alloc().buffer();
                                     for (int i = 0; i < 10; i++) {
-                                        ByteBuf buffer = ctx.alloc().buffer();
+                                        byte[] bytes = fill10Bytes(c, r.nextInt(10) + 1);
+                                        c++;
+                                        buf.writeBytes(bytes);
+                                       /* ByteBuf buffer = ctx.alloc().buffer();
                                         buffer.writeBytes(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,16,17});
                                         ctx.writeAndFlush(buffer);
                                         // 发完即关
-                                        ctx.channel().close();
+                                        ctx.channel().close();*/
                                     }
+                                    ctx.writeAndFlush(buf);
                                 }
                             });
                         }

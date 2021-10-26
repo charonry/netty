@@ -5,6 +5,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.FixedLengthFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,8 @@ public class HelloWorldServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
+                            // 固定长度在打印之前
+                            socketChannel.pipeline().addLast(new FixedLengthFrameDecoder(10));
                             socketChannel.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
                             /*socketChannel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
                                 @Override
