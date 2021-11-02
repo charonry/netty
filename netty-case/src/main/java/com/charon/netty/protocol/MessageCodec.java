@@ -24,8 +24,8 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf buf) throws Exception {
         // 1. 4 字节的魔数
+        //buf.writeBytes(new byte[]{'c','h','a','n','o','n'});
         buf.writeBytes(new byte[]{'c','h','o','n'});
-        //buf.writeBytes(new byte[]{'c','h','o','n'});
         // 2. 1 字节的版本
         buf.writeByte(1);
         // 3. 1 字节的序列化方式。JDK:0;Json:1
@@ -50,6 +50,7 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> list) throws Exception {
         int magicNum = buf.readInt();
+        //ByteBuf magicNum = buf.readBytes(6);
         byte version = buf.readByte();
         byte serializerType = buf.readByte();
         byte messageType = buf.readByte();
