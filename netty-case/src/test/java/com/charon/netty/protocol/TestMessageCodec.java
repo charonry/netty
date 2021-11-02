@@ -27,6 +27,13 @@ public class TestMessageCodec {
         // decode
         ByteBuf buf = ByteBufAllocator.DEFAULT.buffer();
         new MessageCodec().encode(null, message, buf);
-        embeddedChannel.writeInbound(buf);
+        //embeddedChannel.writeInbound(buf);
+
+        // 复现出现粘包半包的现象
+        ByteBuf s1 = buf.slice(0, 100);
+        ByteBuf s2 = buf.slice(100, buf.readableBytes() - 100);
+        s1.retain(); // 引用计数 2
+        embeddedChannel.writeInbound(s1); // release 1
+        embeddedChannel.writeInbound(s2);
     }
 }
