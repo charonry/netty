@@ -1,4 +1,4 @@
-package com.charon.netty.server;
+package com.charon.netty.server.service;
 
 /**
  * @program: netty
