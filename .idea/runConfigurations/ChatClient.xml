@@ -4,7 +4,7 @@
     <module name="nettycase" />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="com.charon.netty.client.*" />
+        <option name="PATTERN" value="com.charon.netty.config.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

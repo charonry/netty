@@ -1,4 +1,4 @@
-package com.charon.netty;
+package com.charon.netty.premise;
 
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;

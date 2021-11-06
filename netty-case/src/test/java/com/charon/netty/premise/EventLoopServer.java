@@ -1,4 +1,4 @@
-package com.charon.netty;
+package com.charon.netty.premise;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;

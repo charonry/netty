@@ -1,5 +1,6 @@
 package com.charon.netty.protocol;
 
+import com.charon.netty.config.Config;
 import com.charon.netty.message.Message;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -31,7 +32,7 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 2. 1 字节的版本
         buf.writeByte(1);
         // 3. 1 字节的序列化方式。JDK:0;Json:1
-        buf.writeByte(0);
+        buf.writeByte(Config.getSerializerAlgorithm().ordinal());
         // 4. 1 字节的指令类型
         buf.writeByte(msg.getMessageType());
         // 5. 4 字节的请求序号
@@ -39,10 +40,7 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 无意义，对齐填充
         buf.writeByte(0xff);
         // 6. 获取内容的字节数组
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
-        oos.writeObject(msg);
-        byte[] bytes = bos.toByteArray();
+        byte[] bytes = Config.getSerializerAlgorithm().serialize(msg);
         // 7. 长度
         buf.writeInt(bytes.length);
         // 8. 写入内容
@@ -61,8 +59,11 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         int length = buf.readInt();
         byte[] bytes = new byte[length];
         buf.readBytes(bytes, 0, length);
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-        Message message = (Message) ois.readObject();
+        // 找到反序列化算法
+        Serializer.Algorithm algorithm = Serializer.Algorithm.values()[serializerType];
+        // 确定具体消息类型
+        Class<? extends Message> messageClass = Message.getMessageClass(messageType);
+        Message message = algorithm.deserialize(messageClass, bytes);
         log.debug("{}, {}, {}, {}, {}, {}", magicNum, version, serializerType, messageType, sequenceId, length);
         log.debug("{}", message);
         list.add(message);
