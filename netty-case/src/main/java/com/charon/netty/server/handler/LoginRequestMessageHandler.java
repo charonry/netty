@@ -10,7 +10,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
  * @program: netty
- * @description
+ * @description 登录处理器
  * @author: charon
  * @create: 2021-11-06 11:31
  **/
@@ -23,6 +23,7 @@ public class LoginRequestMessageHandler extends SimpleChannelInboundHandler<Logi
         boolean login = UserServiceFactory.getUserService().login(username, password);
         LoginResponseMessage message;
         if(login){
+            SessionFactory.getSession().bind(ctx.channel(),username);
             message = new LoginResponseMessage(true, "登录成功");
         }else {
             message = new LoginResponseMessage(false, "账号密码不正确");

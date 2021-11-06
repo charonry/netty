@@ -16,6 +16,8 @@ public class UserServiceMemoryImpl implements UserService{
     {
         allUserMap.put("admin", "123");
         allUserMap.put("charon", "123");
+        allUserMap.put("crane", "123");
+        allUserMap.put("cheny", "123");
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.charon.netty.client;
 
-import com.charon.netty.message.LoginRequestMessage;
-import com.charon.netty.message.LoginResponseMessage;
+import com.charon.netty.message.*;
 import com.charon.netty.protocol.MessageCodecSharable;
 import com.charon.netty.protocol.ProcotolFrameDecoder;
 import io.netty.bootstrap.Bootstrap;
@@ -16,7 +15,10 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -28,13 +30,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  **/
 @Slf4j
 public class ChatClient {
+
+    static CountDownLatch WAIT_FOR_LOGIN_LATCH = new CountDownLatch(1);
+    static AtomicBoolean LOGIN = new AtomicBoolean(false);
+    static Scanner scanner = new Scanner(System.in);
+
     public static void main(String[] args) {
         NioEventLoopGroup group = new NioEventLoopGroup();
         LoggingHandler LOGGING_HANDLER = new LoggingHandler(LogLevel.DEBUG);
         MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
-        CountDownLatch WAIT_FOR_LOGIN_LATCH = new CountDownLatch(1);
-        AtomicBoolean LOGIN = new AtomicBoolean(false);
-        Scanner scanner = new Scanner(System.in);
+
         try {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.channel(NioSocketChannel.class);
@@ -58,43 +63,11 @@ public class ChatClient {
                                 WAIT_FOR_LOGIN_LATCH.countDown();
                             }
                         }
-
                         // 连接建立后触发active事件
                         @Override
                         public void channelActive(ChannelHandlerContext ctx) throws Exception {
                             // 负责用户的连接建立
-                            new Thread(()->{
-                                System.out.println("请输入用户名:");
-                                String username = scanner.nextLine();
-                                System.out.println("请输入密码:");
-                                String password = scanner.nextLine();
-                                LoginRequestMessage message = new LoginRequestMessage(username, password);
-                                // 发送消息
-                                ctx.writeAndFlush(message);
-
-                                System.out.println("等待后续操作...");
-                                try {
-                                    WAIT_FOR_LOGIN_LATCH.await();
-                                } catch (InterruptedException e) {
-                                    log.error("等待登录异常信息{}",e);
-                                }
-                                // 登录状态
-                                if(!LOGIN.get()){
-                                    ctx.channel().close();
-                                    return ;
-                                }
-                                while (true){
-                                    System.out.println("==================================");
-                                    System.out.println("send [username] [content]");
-                                    System.out.println("gsend [group name] [content]");
-                                    System.out.println("gcreate [group name] [m1,m2,m3...]");
-                                    System.out.println("gmembers [group name]");
-                                    System.out.println("gjoin [group name]");
-                                    System.out.println("gquit [group name]");
-                                    System.out.println("quit");
-                                    System.out.println("==================================");
-                                }
-                            },"system in").start();
+                            userOperate(ctx);
                         }
                     });
                 }
@@ -108,4 +81,69 @@ public class ChatClient {
         }
     }
 
+
+    /**
+     * 用户的操作
+     */
+    public static void userOperate(ChannelHandlerContext ctx){
+        new Thread(()->{
+            System.out.println("请输入用户名:");
+            String username = scanner.nextLine();
+            System.out.println("请输入密码:");
+            String password = scanner.nextLine();
+            LoginRequestMessage message = new LoginRequestMessage(username, password);
+            // 发送消息
+            ctx.writeAndFlush(message);
+
+            System.out.println("等待后续操作...");
+            try {
+                WAIT_FOR_LOGIN_LATCH.await();
+            } catch (InterruptedException e) {
+                log.error("等待登录异常信息{}",e);
+            }
+            // 登录状态
+            if(!LOGIN.get()){
+                ctx.channel().close();
+                return ;
+            }
+            while (true){
+                System.out.println("==================================");
+                System.out.println("send [username] [content]");
+                System.out.println("gsend [group name] [content]");
+                System.out.println("gcreate [group name] [m1,m2,m3...]");
+                System.out.println("gmembers [group name]");
+                System.out.println("gjoin [group name]");
+                System.out.println("gquit [group name]");
+                System.out.println("quit");
+                System.out.println("==================================");
+                String command = scanner.nextLine();
+                String[] s = command.split(" ");
+                switch (s[0]){
+                    case "send":
+                        ctx.writeAndFlush(new ChatRequestMessage(username,s[1],s[2]));
+                        break;
+                    case "gsend":
+                        ctx.writeAndFlush(new GroupChatRequestMessage(username,s[1],s[2]));
+                        break;
+                    case "gcreate":
+                        Set<String> set = new HashSet<>(Arrays.asList(s[2].split(",")));
+                        set.add(username);
+                        ctx.writeAndFlush(new GroupCreateRequestMessage(s[1],set));
+                        break;
+                    case "gmembers":
+                        ctx.writeAndFlush(new GroupMembersRequestMessage(s[1]));
+                        break;
+                    case "gjoin":
+                        ctx.writeAndFlush(new GroupJoinRequestMessage(username,s[1]));
+                        break;
+                    case "gquit":
+                        ctx.writeAndFlush(new GroupQuitRequestMessage(username,s[1]));
+                        break;
+                    case "quit":
+                        ctx.channel().close();
+                        return;
+                }
+            }
+        },"system in").start();
+    }
 }

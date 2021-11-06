@@ -2,6 +2,7 @@ package com.charon.netty.server;
 
 import com.charon.netty.protocol.MessageCodecSharable;
 import com.charon.netty.protocol.ProcotolFrameDecoder;
+import com.charon.netty.server.handler.ChatRequestMessageHandler;
 import com.charon.netty.server.handler.LoginRequestMessageHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -26,6 +27,7 @@ public class ChatServer {
         NioEventLoopGroup worker = new NioEventLoopGroup();
         LoggingHandler LOGGING_HANDLER = new LoggingHandler(LogLevel.DEBUG);
         LoginRequestMessageHandler LOGIN_HANDLER = new LoginRequestMessageHandler();
+        ChatRequestMessageHandler CHAT_HANDLER = new ChatRequestMessageHandler();
         MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -38,6 +40,7 @@ public class ChatServer {
                     socketChannel.pipeline().addLast(LOGGING_HANDLER);
                     socketChannel.pipeline().addLast(MESSAGE_CODEC);
                     socketChannel.pipeline().addLast(LOGIN_HANDLER);
+                    socketChannel.pipeline().addLast(CHAT_HANDLER);
                 }
             });
             Channel channel = bootstrap.bind(8080).sync().channel();
