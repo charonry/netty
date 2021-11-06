@@ -4,15 +4,15 @@ import com.charon.netty.message.*;
 import com.charon.netty.protocol.MessageCodecSharable;
 import com.charon.netty.protocol.ProcotolFrameDecoder;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -21,6 +21,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 
 /**
  * @program: netty
@@ -50,6 +51,22 @@ public class ChatClient {
                     socketChannel.pipeline().addLast(new ProcotolFrameDecoder());
                     //socketChannel.pipeline().addLast(LOGGING_HANDLER);
                     socketChannel.pipeline().addLast(MESSAGE_CODEC);
+                    // 用来判断是不是 读空闲时间过长，或 写空闲时间过长
+                    // 3s 内如果没有向服务器写数据，会触发一个 IdleState#WRITER_IDLE 事件
+                    socketChannel.pipeline().addLast(new IdleStateHandler(0, 3, 0));
+                    // ChannelDuplexHandler 可以同时作为入站和出站处理器
+                    socketChannel.pipeline().addLast(new ChannelDuplexHandler() {
+                        // 用来触发特殊事件
+                        @Override
+                        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception{
+                            IdleStateEvent event = (IdleStateEvent) evt;
+                            // 触发了写空闲事件
+                            if (event.state() == IdleState.WRITER_IDLE) {
+                                //log.debug("3s 没有写数据了，发送一个心跳包");
+                                ctx.writeAndFlush(new PingMessage());
+                            }
+                        }
+                    });
                     socketChannel.pipeline().addLast("client handler",new ChannelInboundHandlerAdapter(){
                         // 接受消息
                         @Override
@@ -68,6 +85,18 @@ public class ChatClient {
                         public void channelActive(ChannelHandlerContext ctx) throws Exception {
                             // 负责用户的连接建立
                             userOperate(ctx);
+                        }
+
+                        // 在连接断开时触发
+                        @Override
+                        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                            log.debug("连接已经断开，按任意键退出..");
+                        }
+
+                        // 在出现异常时触发
+                        @Override
+                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                            log.debug("连接已经异常断开，按任意键退出..{}", cause.getMessage());
                         }
                     });
                 }
