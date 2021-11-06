@@ -14,6 +14,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
  * @author: charon
  * @create: 2021-11-06 11:31
  **/
+@ChannelHandler.Sharable
 public class LoginRequestMessageHandler extends SimpleChannelInboundHandler<LoginRequestMessage> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, LoginRequestMessage msg) throws Exception {
