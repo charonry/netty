@@ -32,6 +32,7 @@ public class ChatServer {
         GroupMembersRequestMessageHandler GROUP_MEMBERS_HANDLER = new GroupMembersRequestMessageHandler();
         GroupChatRequestMessageHandler GROUP_CHAT_HANDLER = new GroupChatRequestMessageHandler();
         GroupQuitRequestMessageHandler GROUP_QUIT_HANDLER = new GroupQuitRequestMessageHandler();
+        QuitHandler QUIT = new QuitHandler();
         MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -50,6 +51,7 @@ public class ChatServer {
                     socketChannel.pipeline().addLast(GROUP_MEMBERS_HANDLER);
                     socketChannel.pipeline().addLast(GROUP_CHAT_HANDLER);
                     socketChannel.pipeline().addLast(GROUP_QUIT_HANDLER);
+                    socketChannel.pipeline().addLast(QUIT);
                 }
             });
             Channel channel = bootstrap.bind(8080).sync().channel();
