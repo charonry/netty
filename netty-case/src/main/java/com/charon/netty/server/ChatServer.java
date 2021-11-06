@@ -2,8 +2,7 @@ package com.charon.netty.server;
 
 import com.charon.netty.protocol.MessageCodecSharable;
 import com.charon.netty.protocol.ProcotolFrameDecoder;
-import com.charon.netty.server.handler.ChatRequestMessageHandler;
-import com.charon.netty.server.handler.LoginRequestMessageHandler;
+import com.charon.netty.server.handler.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -28,6 +27,11 @@ public class ChatServer {
         LoggingHandler LOGGING_HANDLER = new LoggingHandler(LogLevel.DEBUG);
         LoginRequestMessageHandler LOGIN_HANDLER = new LoginRequestMessageHandler();
         ChatRequestMessageHandler CHAT_HANDLER = new ChatRequestMessageHandler();
+        GroupCreateRequestMessageHandler GROUP_CREATE_HANDLER = new GroupCreateRequestMessageHandler();
+        GroupJoinRequestMessageHandler GROUP_JOIN_HANDLER = new GroupJoinRequestMessageHandler();
+        GroupMembersRequestMessageHandler GROUP_MEMBERS_HANDLER = new GroupMembersRequestMessageHandler();
+        GroupChatRequestMessageHandler GROUP_CHAT_HANDLER = new GroupChatRequestMessageHandler();
+        GroupQuitRequestMessageHandler GROUP_QUIT_HANDLER = new GroupQuitRequestMessageHandler();
         MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -41,6 +45,11 @@ public class ChatServer {
                     socketChannel.pipeline().addLast(MESSAGE_CODEC);
                     socketChannel.pipeline().addLast(LOGIN_HANDLER);
                     socketChannel.pipeline().addLast(CHAT_HANDLER);
+                    socketChannel.pipeline().addLast(GROUP_CREATE_HANDLER);
+                    socketChannel.pipeline().addLast(GROUP_JOIN_HANDLER);
+                    socketChannel.pipeline().addLast(GROUP_MEMBERS_HANDLER);
+                    socketChannel.pipeline().addLast(GROUP_CHAT_HANDLER);
+                    socketChannel.pipeline().addLast(GROUP_QUIT_HANDLER);
                 }
             });
             Channel channel = bootstrap.bind(8080).sync().channel();
