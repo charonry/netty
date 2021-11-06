@@ -2,8 +2,9 @@ package com.charon.netty.server;
 
 import com.charon.netty.protocol.MessageCodecSharable;
 import com.charon.netty.protocol.ProcotolFrameDecoder;
+import com.charon.netty.server.handler.LoginRequestMessageHandler;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -24,6 +25,7 @@ public class ChatServer {
         NioEventLoopGroup boss = new NioEventLoopGroup();
         NioEventLoopGroup worker = new NioEventLoopGroup();
         LoggingHandler LOGGING_HANDLER = new LoggingHandler(LogLevel.DEBUG);
+        LoginRequestMessageHandler LOGIN_HANDLER = new LoginRequestMessageHandler();
         MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -35,12 +37,13 @@ public class ChatServer {
                     socketChannel.pipeline().addLast( new ProcotolFrameDecoder());
                     socketChannel.pipeline().addLast(LOGGING_HANDLER);
                     socketChannel.pipeline().addLast(MESSAGE_CODEC);
+                    socketChannel.pipeline().addLast(LOGIN_HANDLER);
                 }
             });
-            ChannelFuture channelFuture = bootstrap.bind(8080).sync();
-            channelFuture.channel().closeFuture().sync();
+            Channel channel = bootstrap.bind(8080).sync().channel();
+            channel.closeFuture().sync();
         } catch (InterruptedException e) {
-            log.error("server erroe",e);
+            log.error("server error",e);
         }finally {
             boss.shutdownGracefully();
             worker.shutdownGracefully();
