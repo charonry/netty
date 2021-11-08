@@ -1,10 +1,12 @@
 package com.charon.netty.client;
 
 import com.charon.netty.client.handler.RpcResponseMessageHandler;
+import com.charon.netty.message.RpcRequestMessage;
 import com.charon.netty.protocol.MessageCodecSharable;
 import com.charon.netty.protocol.ProcotolFrameDecoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -42,6 +44,20 @@ public class RpcClient {
                 }
             });
             Channel channel = bootstrap.connect("localhost", 8080).sync().channel();
+
+            ChannelFuture future = channel.writeAndFlush(new RpcRequestMessage(1,
+                    "com.charon.netty.server.service.HelloService",
+                    "sayHello",
+                    String.class,
+                    new Class[]{String.class},
+                    new Object[]{"chairn"})).addListener(promise ->{
+                        if(!promise.isSuccess()){
+                            Throwable cause = promise.cause();
+                            log.error("error", cause);
+                        }
+            });
+
+
             channel.closeFuture().sync();
         } catch (Exception e) {
             log.error("client error", e);

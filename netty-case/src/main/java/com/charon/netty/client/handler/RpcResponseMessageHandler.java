@@ -17,6 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 public class RpcResponseMessageHandler extends SimpleChannelInboundHandler<RpcResponseMessage> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RpcResponseMessage msg) throws Exception {
-
+        log.debug("{}",msg);
     }
 }
