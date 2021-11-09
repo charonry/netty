@@ -2,6 +2,7 @@ package com.charon.netty.client;
 
 import com.charon.netty.client.handler.RpcResponseMessageHandler;
 import com.charon.netty.message.RpcRequestMessage;
+import com.charon.netty.message.RpcResponseMessage;
 import com.charon.netty.protocol.MessageCodecSharable;
 import com.charon.netty.protocol.ProcotolFrameDecoder;
 import com.charon.netty.protocol.SequenceIdGenerator;
@@ -15,6 +16,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.concurrent.DefaultPromise;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Proxy;
@@ -39,8 +41,8 @@ public class RpcClientManager {
                 new Class[]{String.class},
                 new Object[]{"chairn"}));*/
         HelloService service = getProxyService(HelloService.class);
-        service.sayHello("charon");
-        service.sayHello("你好");
+        System.out.println(service.sayHello("charon"));
+        System.out.println(service.sayHello("你好"));
     }
 
     /**
@@ -65,7 +67,18 @@ public class RpcClientManager {
             );
             // 2. 将消息对象发送出去
             getChannel().writeAndFlush(msg);
-            return null;
+            // 3. 准备一个空 Promise 对象，来接收结果。指定 promise 对象异步接收结果线程
+            DefaultPromise<Object> promise = new DefaultPromise<>(getChannel().eventLoop());
+            RpcResponseMessageHandler.PROMISES.put(sequenceId,promise);
+            // 4. 等待 promise 结果
+            promise.await();
+            if(promise.isSuccess()) {
+                // 调用正常
+                return promise.getNow();
+            } else {
+                // 调用失败
+                throw new RuntimeException(promise.cause());
+            }
         });
         return (T) o;
     }
